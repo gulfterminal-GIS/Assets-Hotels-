@@ -1,0 +1,739 @@
+﻿
+
+
+function FormDataJson(formElement) {
+    const array = $(formElement).serializeArray(); // Encodes the set of form elements as an array of names and values.
+    const json = {};
+    $.each(array, function () {
+        json[this.name] = this.value || "";
+    });
+    return json;
+}
+/* Self Dignostics open Modal */
+
+function ValidSelect(value, spanId) {
+    if (value != '' && value != undefined && value != null) {
+        $('#' + spanId).html('');
+    }
+}
+function OpenModal() {
+    ShowLoading();
+    $.ajax({
+        type: 'GET',
+        url: `${Host}/SystemSettings/GetDataFromSystemSetting`,
+        processData: false,
+        dataType: 'html',
+        success: function (result) {
+            EndLoading();
+            if (result != null) {
+                $('#LoadModal').html(result);
+                $('#headerModal').modal('show')
+            }
+        },
+        error: function () { EndLoading(); }
+    })
+}
+/* End Self Dignostics open Modal */
+
+//$("#btnPeriodicInspection").on("click", function () {
+//    $("#mask").addClass("d-block");
+//});
+$(".close").on("click", function () {
+    $("#mask").removeClass("d-block");
+    $("#mask").html('');
+});
+
+$(document).on("click", "#btnPeriodicInspection", function (e) {
+    $("#AutomatedScreen").html("");
+    ShowLoading();
+    //var model = {
+    //    SearchCriteria: FormDataJson($("#ProjectPerContractorForm"))
+    //}
+    $("#AutomatedScreen").css({ display: "block !important;" });
+    $.ajax({
+        type: 'POST',
+        url: `${Host}/Home/GetDelayedProjectInfo`,
+        success: function (result) {
+            EndLoading();
+            $("#AutomatedScreen").html(result);
+         /*   console.log("result", result)*/
+ /*           console.log("AutomatedScreen", $("#AutomatedScreen").html())*/
+            var probs = $("#js-NoOfProb").val()
+            if (probs > 0) {
+                DrawChart();
+            //}
+            } else {
+                $('#myModalss').modal("show");
+                //$("#NoDataModal").css({ display: "block !important;" });
+                //$("#exampleModal").css({ display: "block !important;" });
+            }
+            $('.modal-backdrop').removeClass();
+        },
+        error: function () { ShowInformationPopupNew("حدث خطأ ما", "error"); }
+    });
+    /*  alert("gggggggggg");*/
+});
+
+function DrawChart() {
+    var valid = $('#valid').val();
+    var root = am5.Root.new("chartdivv");
+    root._logo.dispose();
+
+    // Set themes
+    // https://www.amcharts.com/docs/v5/concepts/themes/
+    root.setThemes([
+        am5themes_Animated.new(root)
+    ]);
+
+    // Create chart
+    // https://www.amcharts.com/docs/v5/charts/radar-chart/
+    var chart = root.container.children.push(
+        am5radar.RadarChart.new(root, {
+            panX: false,
+            panY: false,
+            startAngle: 180,
+            endAngle: 360
+        })
+    );
+
+
+    // Create axis and its renderer
+    // https://www.amcharts.com/docs/v5/charts/radar-chart/gauge-charts/#Axes
+    var axisRenderer = am5radar.AxisRendererCircular.new(root, {
+        innerRadius: -10,
+        //radius:20,
+        strokeOpacity: 1,
+        strokeWidth: 20,
+        strokeGradient: am5.LinearGradient.new(root, {
+            rotation: 0,
+            stops: [
+                { color: am5.color(0x19d228) },
+                { color: am5.color(0xf4fb16) },
+                { color: am5.color(0xf6d32b) },
+                { color: am5.color(0xfb7116) }
+            ]
+        })
+    });
+
+    var xAxis = chart.xAxes.push(
+        am5xy.ValueAxis.new(root, {
+            maxDeviation: 0,
+            min: 0,
+            max: 100,
+            strictMinMax: true,
+            renderer: axisRenderer
+        })
+    );
+    xAxis.get("renderer").labels.template.setAll({
+        fill: root.interfaceColors.get("alternativeText")
+    });
+    xAxis.get("renderer").labels.template.set("forceHidden", true);
+
+
+    // Add clock hand
+    // https://www.amcharts.com/docs/v5/charts/radar-chart/gauge-charts/#Clock_hands
+    var axisDataItem = xAxis.makeDataItem({});
+    axisDataItem.set("value", 0);
+    var clockHand = am5radar.ClockHand.new(root, {
+        //radius: am5.percent(99);
+        pinRadius: am5.percent(8),
+        radius: am5.percent(85),
+        bottomWidth: 28
+    })
+    var bullet = axisDataItem.set("bullet", am5xy.AxisBullet.new(root, {
+        sprite: clockHand
+    }));
+
+    xAxis.createAxisRange(axisDataItem);
+
+    axisDataItem.get("grid").set("visible", false);
+
+    setInterval(() => {
+
+        axisDataItem.animate({
+            key: "value",
+            to: Math.round(valid),
+            duration: 1600,
+            easing: am5.ease.out(am5.ease.cubic)
+        });
+    }, 2000);
+
+    //ZZZ
+    clockHand.pin.adapters.add("fill", function (fill) {
+        return am5.color(0x000000)
+    })
+
+    //clockHand.pin.adapters.add("stroke", function (fill) {
+    //    return am5.color("#001d49")
+    //})
+
+    clockHand.hand.adapters.add("fill", function (fill) {
+        return am5.color(0x0000)
+    })
+
+    // Make stuff animate on load
+    chart.appear(1000, 100);
+    ////////////////////////////
+    var id = '#exampleModal';
+
+    //Get the screen height and width
+    var maskHeight = $(document).height();
+    var maskWidth = $(window).width();
+
+    //Set heigth and width to mask to fill up the whole screen
+    $('#mask').css({ 'width': maskWidth, 'height': maskHeight, 'left': 0 });
+
+    //transition effect
+    $('#mask').fadeIn(500);
+    $('#mask').fadeTo("slow", 0.9);
+
+    //Get the window height and width
+    var winH = $(window).height();
+    var winW = $(window).width();
+
+    //Set the popup window to center
+    $(id).css('top', winH / 2 - $(id).height() / 2);
+    $(id).css('left', winW / 2 - $(id).width() / 2);
+
+    //transition effect
+    $(id).fadeIn(2000);
+
+    //if close button is clicked
+    $('.window .close').click(function (e) {
+        //Cancel the link behavior
+        e.preventDefault();
+
+        $('#mask').hide();
+        $('.window').hide();
+    });
+
+    //if mask is clicked
+    $('#mask').click(function () {
+        $(this).hide();
+        $('.window').hide();
+    });
+}
+function getStroke() {
+    return am5.color(0xfb7116)
+}
+function getFill() {
+    return am5.color(0x000000)
+}
+
+function CheckValueIsEmpty(value, isDefaultZero = false) {
+    if (typeof (value) == "number") {
+        value = value.toString();
+    }
+
+    var isEmpty = (value == null || value == "null" || value == "" || value == undefined || value == "undefined");
+    if (isDefaultZero) {
+        isEmpty = isEmpty || value == "0";
+    }
+
+    return isEmpty;
+}
+
+function DownloadFile(path) {
+ 
+            var arr = path.split('/');
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(path);
+            a.href = url;
+            a.download = arr[arr.length - 1];
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+   
+}
+
+function GetUrlFromBase64(base64) {
+    const binaryImg = atob(base64);
+    const length = binaryImg.length;
+    const arrayBuffer = new ArrayBuffer(length);
+    const uintArray = new Uint8Array(arrayBuffer);
+    for (var i = 0; i < length; i++) {
+        uintArray[i] = binaryImg.charCodeAt(i);
+    }
+
+    const fileBlob = new Blob([uintArray], { type: 'application/pdf' });
+    var fileURL = window.URL.createObjectURL(fileBlob);
+    window.open(fileURL, "_blank");
+}
+
+function GetTodayDate() {
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+
+    today = mm + '/' + dd + '/' + yyyy;
+    return today;
+}
+
+function ChangePage(cat, TotalCount, TotalPages, CallBackFun) {
+    var currentPage = ($("#hdPageNumber").val() != 1) ? ($("#hdPageNumber").val()) : (1);
+    if (cat == 'first') {
+        currentPage = 1;
+    }
+    else if (cat == 'last') {
+        currentPage = TotalPages;
+    }
+    else if (cat == 'prev') {
+        if (currentPage > 1) {
+            currentPage--;
+        }
+    }
+    else if (cat == 'next') {
+        if (currentPage < TotalCount) {
+            currentPage++;
+        }
+    }
+
+    $("#hdPageNumber").val(currentPage)
+    if (typeof (CallBackFun) == "function") {
+        CallBackFun();
+    }
+}
+
+function ChangePageNumber(obj, TotalPages, CallBackFun) {
+    var value = $(obj).attr("value");
+    if (value > TotalPages) {
+        value = TotalPages;
+    }
+
+    if (CheckValueIsEmpty(value)) {
+        value = $("#PageNo").val();
+    }
+
+    if (value === 0) value = 1;
+    $("#hdPageNumber").val(value)
+    if (typeof (CallBackFun) == "function") {
+        CallBackFun();
+    }
+}
+
+function ActiveTab(obj) {
+   // var current = document.getElementsByClassName("active");
+    var current = document.getElementsByClassName("tabs-btn");
+    $(current).removeClass('active');
+    $(obj).addClass("active");
+}
+
+function readURL(input, controllId, controllId2) {
+    if (input.files && input.files[0]) {
+        var fileReader = new FileReader();
+        var file = input.files[0];
+        if (file.type.match('image')) {
+            fileReader.onload = function () {
+                var img = document.getElementById(controllId);
+                img.src = fileReader.result;
+            };
+            fileReader.readAsDataURL(file);
+        } else {
+            fileReader.onload = function () {
+                var blob = new Blob([fileReader.result], { type: file.type });
+                var url = URL.createObjectURL(blob);
+                var scale = 1;
+                var videoEl = document.getElementById(controllId);
+                videoEl.src = url;
+                var interval = setInterval(function () {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = videoEl.width * scale;
+                    canvas.height = videoEl.height * scale;
+                    canvas.getContext('2d').drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+                    const image = document.getElementById(controllId2);
+                    image.src = canvas.toDataURL();
+                    clearInterval(interval);
+                    $("#" + controllId2).show();
+                    $("#" + controllId).hide();
+                }, 500);
+            };
+            fileReader.readAsArrayBuffer(file);
+        }
+    }
+}
+
+function extFileVaildation(cat, oInput, errorSpanId) {
+    //cat > image,file ... etc
+    document.getElementById(errorSpanId).innerHTML = "";
+    var _validFileExtensions = [];
+    for (let i = 0; i < cat.length; i++) {
+        if (cat[i] === "img") {
+            _validFileExtensions.push(".jpg", ".jpeg", ".bmp", ".gif", ".png");
+        }
+        else if (cat[i] === "video") {
+            _validFileExtensions.push(".mp4", ".mov", ".mpg", ".wmv", ".rmvb", ".swf");
+        }
+        else if (cat[i] === "pdf") {
+            _validFileExtensions.push(".pdf");
+        }
+        else if (cat[i] === "xlsx") {
+            _validFileExtensions.push(".xlsx");
+        }
+    }
+
+    if (oInput.type == "file") {
+        var sFileName = oInput.value;
+        if (sFileName.length > 0) {
+            var blnValid = false;
+            for (var j = 0; j < _validFileExtensions.length; j++) {
+                var sCurExtension = _validFileExtensions[j];
+                if (sFileName.substr(sFileName.length - sCurExtension.length, sCurExtension.length).toLowerCase() == sCurExtension.toLowerCase()) {
+                    blnValid = true;
+                    break;
+                }
+            }
+
+            if (!blnValid) {
+                document.getElementById(errorSpanId).innerHTML = ("امتداد غير صالح") + _validFileExtensions.join(", ");
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+function numbersOnly(e) {
+    var evt = ((navigator.appName == "Microsoft Internet Explorer") ? (event) : (e));
+    var charCode = (evt.which != undefined || evt.which != null) ? evt.which : evt.keyCode
+    var x = String.fromCharCode(charCode);
+    var charAry = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    if (charAry.includes(x) || charCode == 8 || charCode == 32) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function checkFileSize(oInputId, availableSize, errorSpanId)//size in mega
+{
+    var f = $("#" + oInputId)[0].files[0];
+    var size = (availableSize * (1024 * 1024)).toFixed(2);
+    if (f.size > size || f.fileSize > size) {
+        document.getElementById(errorSpanId).innerHTML = "Allowed file size exceeded. (Max. " + availableSize + " MB)";
+        $("#" + oInputId).val("");
+        return false;
+    }
+
+    return true;
+}
+
+function ShowLoading() {
+    $("#LayoutOverlay").show();
+}
+
+function EndLoading() {
+    $("#LayoutOverlay").hide();
+}
+
+function CompareDate(obj, compareToobj, cat) {
+    var value = $(`#${obj}`).val();
+    var compareToDateValue = $(`#${compareToobj}`).val();
+    if (compareToDateValue && !isNaN(Date.parse(compareToDateValue))) {
+        //if date to compare is not a valid date, don't validate this
+        switch (cat) {
+            case 'GreatherThen':
+                return new Date(value) > new Date(compareToDateValue);
+            case 'LessThen':
+                return new Date(value) < new Date(compareToDateValue);
+            default:
+                {
+                    errMsg = "Compare validation cannot be executed: '" + parameters.comparetype + "' is invalid for comparetype parameter";
+                    //alert(errMsg);
+                    return false;
+                }
+        }
+        return true;
+    }
+    else
+        return true;
+}
+
+function removeObjectWithId(arr, id) {
+    const objWithIdIndex = arr.findIndex((obj) => obj.id === id);
+
+    if (objWithIdIndex > -1) {
+        arr.splice(objWithIdIndex, 1);
+    }
+
+    return arr;
+}
+
+function GoUpValidation() {
+    var errorElements = document.querySelectorAll(".input-validation-error");
+    for (let index = 0; index < errorElements.length; index++) {
+        $('html, body').animate({
+            scrollTop: $(errorElements[0]).focus().offset().top - 100
+        }, 1000);
+        return false;
+    }
+}
+
+$(document).on("click", ".fa-caret-up, .ascending", function () {
+    $("#hdOrderDir").val("ASC");
+    var name = $(this).closest('.table-title-row').find(".CoulmnName").attr("name")
+    $("#hdOrderCoulmn").val(name);
+});
+
+$(document).on("click", ".fa-caret-down, .descending", function () {
+
+    $("#hdOrderDir").val("DESC");
+    var name = $(this).closest('.table-title-row').find(".CoulmnName").attr("name")
+    $("#hdOrderCoulmn").val(name);
+});
+
+$(document).on("click", ".CoulmnName", function () {
+    var name = $(this).attr("name");
+    $("#hdOrderCoulmn").val(name);
+});
+
+function Print(html) {
+    var mywindow = window.open('', 'divprint', 'height=800,width=1000');
+    mywindow.document.write(html);
+    mywindow.document.close(); // necessary for IE >= 10
+    mywindow.focus(); // necessary for IE >= 10
+    mywindow.print();
+
+    return true;
+}
+
+//function ShowInformationPopupNew(msg, type = 'confirmation') {
+//    $("#popupMessage").html(msg);
+//    $("#InformationPopUpNew").modal("show");
+//    if (type == 'confirmation') {
+//        $("#InformationPopUpTitleNew").html(`&check; ${Confirm.value}`);
+//        $("#popupIcon").attr("src", "/new version/images/ooui_success.svg");
+//    } else if (type == 'error') {
+//        $("#InformationPopUpTitleNew").html(`${ErrorPopUP.value} &#33;`);
+//        $("#popupIcon").attr("src", "/new version/images/lets-icons--close-round-fill.svg");
+//    } else if (type == 'warning') {
+//        $("#InformationPopUpTitleNew").html(`${Warn.value} &#33;`);
+//        $("#popupIcon").attr("src", "/new version/images/emojione--warning.svg");
+//    } else if (type == 'alert') {
+//        $("#InformationPopUpTitleNew").html(`${Alert.value} &#33;`);
+//        $("#popupIcon").attr("src", "/new version/images/jam--triangle-danger.svg");
+//    }
+
+//}
+function ShowInformationPopupNew(msg, type = 'confirmation') {
+    $("#js-popupMessage").text(msg);
+    $("#InformationPopUpNew").modal("show");
+
+    switch (type) {
+        case 'confirmation':
+            $("#InformationPopUpTitleNew").html(`&check; ${Confirm.value}`);
+            $("#js-popupIcon").attr("src", `${Host}/new version/images/ooui_success.svg`);
+            break;
+        case 'error':
+            $("#InformationPopUpTitleNew").html(`${ErrorPopUP.value} &#33;`);
+            $("#js-popupIcon").attr("src", `${Host}/new version/images/lets-icons--close-round-fill.svg`);
+            break;
+        case 'warning':
+            $("#InformationPopUpTitleNew").html(`${Warn.value} &#33;`);
+            $("#js-popupIcon").attr("src", `${Host}/new version/images/emojione--warning.svg`);
+            break;
+        case 'alert':
+            $("#InformationPopUpTitleNew").html(`${Alert.value} &#33;`);
+            $("#js-popupIcon").attr("src", `${Host}/new version/images/jam--triangle-danger.svg`);
+            break;
+    }
+
+}
+
+
+function DeleteMessage(msg) {
+    $('#js-DeleteTitle').html(msg);
+    $('#deleteClauseModal').modal('show');
+}
+
+function ActivateMessage(label,msg,confirm) {
+    $('#js-ActivateModalLabel').html(label);
+    $('#js-ActivateTitle').html(msg);
+    $('#js-confirmActivate').html(confirm);
+    $('#ActivateModal').modal('show');
+}
+
+
+function maxValue(id, value) {
+    var numbers = document.getElementById(id);
+    //console.log(numbers);
+    var maxQuantity = value;
+
+    numbers.addEventListener("input", function (e) {
+        if (this.value > maxQuantity) {
+            this.value = maxQuantity;
+        }
+    })
+};
+
+function base64ToPDF(base64EncodedData, fileName = 'file') {
+    const bufferArray = base64ToArrayBuffer(base64EncodedData);
+    const blobStore = new Blob([bufferArray], { type: 'application/pdf' });
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveOrOpenBlob(blobStore);
+        return;
+    }
+
+    const fileURL = URL.createObjectURL(blobStore);
+    return fileURL;
+}
+
+function base64ToArrayBuffer(base64) {
+    var binary_string = window.atob(base64);
+    var len = binary_string.length;
+    var bytes = new Uint8Array(len);
+    for (var i = 0; i < len; i++) {
+        bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+function CreatePdf(IsScreen, IdentifierNo, UserName, isPrint, htmlString, fileName, selectedElementId, pdfOrientation = "landscape", pdfUnit = 'mm', pdfFormat = 'Ledger') {
+    var doc = new DOMParser().parseFromString(htmlString, "text/html");
+    var _element = doc.getElementById(selectedElementId);
+    /*  var header = doc.getElementById(headerID);*/
+    _element.style.position = "relative";
+    _element.style.margin = "auto";
+    _element.style.padding = 'auto';
+    _element.style.height = 'auto';
+    _element.style.width = 'auto';
+    _element.style.fontFamily = "arial";
+    //window.document.body.scrollTop = 0;
+    //window.document.documentElement.scrollTop = 0;
+    var options = {
+        margin: 10,
+        autoPaging: 'text',
+        filename: fileName,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 2, dpi: 300, letterRendering: true },
+        jsPDF: { unit: pdfUnit, format: pdfFormat, orientation: pdfOrientation, precision: 32 },
+        //pageBreak: { mode: '', before: '.before', after: '.after', avoid: '.avoid' }
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    }
+    var optionsPrintSCreen = {
+        margin: 10,
+        autoPaging: 'text',
+        filename: fileName,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 2, dpi: 300, letterRendering: true },
+        jsPDF: { unit: pdfUnit, format: pdfFormat, orientation: pdfOrientation, precision: 32 },
+        
+    }
+    if (isPrint && IsScreen) {
+        html2pdf().from(_element).set(optionsPrintSCreen).outputPdf().then(function (pdf) {
+            var base6 = btoa(pdf);
+            GetUrlFromBase64(base6);
+        });
+    }
+
+    if (isPrint) {
+        html2pdf().from(_element).set(options).outputPdf().then(function (pdf) {
+            var base6 = btoa(pdf);
+            GetUrlFromBase64(base6);
+        });
+    }
+    else {
+        html2pdf().from(_element).set(options).toPdf().get('pdf').then(function (pdf) {
+            var totalPages = pdf.internal.getNumberOfPages();
+            for (i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(10);
+                pdf.setTextColor(100);
+                pdf.text('Page ' + i + ' of ' + totalPages, 20, (pdf.internal.pageSize.getHeight() - 4));
+
+                pdf.text('Report BY: ' + UserName + ' ' + ' ' + IdentifierNo, (pdf.internal.pageSize.getWidth() - 100), (pdf.internal.pageSize.getHeight() - 4));
+               
+            }
+
+        }).save();
+      
+    }
+}
+function CreatePdf2(headerID, IdentifierNo, UserName, isPrint, htmlString, fileName, selectedElementId, pdfOrientation = "landscape", pdfUnit = 'mm', pdfFormat = 'Ledger') {
+    var doc = new DOMParser().parseFromString(htmlString, "text/html");
+    var _element = doc.getElementById(selectedElementId);
+    var header = doc.getElementById(headerID);
+    _element.style.position = "relative";
+    _element.style.margin = "auto";
+    _element.style.padding = 'auto';
+    _element.style.height = 'auto';
+    _element.style.width = 'auto';
+    _element.style.fontFamily = "arial";
+   
+    var options = {
+        margin: 7,
+        autoPaging: 'text',
+        filename: fileName,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 2, dpi: 300, letterRendering: true },
+        jsPDF: { unit: pdfUnit, format: pdfFormat, orientation: pdfOrientation, precision: 32 },
+       
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    }
+
+    if (isPrint) {
+        html2pdf().from(_element).set(options).outputPdf().then(function (pdf) {
+            var base6 = btoa(pdf);
+            GetUrlFromBase64(base6);
+        });
+    }
+    else {
+        html2pdf().from(_element).set(options).toPdf().get('pdf').then(function (pdf) {
+            var totalPages = pdf.internal.getNumberOfPages();
+            for (i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(10);
+                pdf.setTextColor(100);
+                pdf.text('Page ' + i + ' of ' + totalPages, 20, (pdf.internal.pageSize.getHeight() - 4));
+
+               
+                pdf.text('Report: ' + UserName + ' ' + ' ' + IdentifierNo, (pdf.internal.pageSize.getWidth() - 100), (pdf.internal.pageSize.getHeight() - 4));
+               
+            }
+
+        }).save();
+       
+    }
+}
+
+function convertArabicNumbersToEnglish(obj) {
+    let arabic_numbers = "٠١٢٣٤٥٦٧٨٩".split('');
+  
+    var arabic_text = $(obj).val();
+    let n = '';
+    for (let i = 0; i < arabic_text.length; i++) {
+        let state = arabic_numbers.indexOf(arabic_text[i]);
+        if (state > 0) {
+            n += state;
+        } else {
+            n += arabic_text[i];
+        }
+    }
+
+    $(obj).val(n);
+    return n;
+}
+
+//download function onClick
+function downloadFile(base64Data, contentType, fileName) {
+    const linkSource = `data:${contentType};base64,${base64Data}`;
+    /*const linkSource = base64Data;*/
+    const downloadLink = document.createElement("a");
+    downloadLink.href = linkSource;
+    downloadLink.download = fileName;
+    downloadLink.click();
+    console.log("Success: file downloaded!");
+}
+
+function changeStep(previousStepId, nextStepId) {
+    $("#" + previousStepId).hide();
+    $("#" + nextStepId).show();
+}
+
+changeStep2 = () => {
+    $('#Tab2').hide();
+    $('#Tab1').show();
+}
