@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+
 body {
     min-height: 100vh;
     position: relative;
@@ -9,6 +11,7 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
+    font-family: 'Cairo', sans-serif;
 }
 
 /* Hero sections background wrapper */
@@ -33,18 +36,21 @@ ul {
     align-items: center;
     justify-content: space-between;
     height: 9rem;
+    transform: scale(0.95);
+    transform-origin: center;
+    gap: 50em;
 }
 
 .header__logos {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 1.5em;
+    margin-right: -3.5em;
 }
 
 .header__logos img {
-    height: 3.5rem;
-    width: auto;
+    height: auto;
+    max-width: 80%;
 }
 
 .header__contact {
@@ -94,6 +100,7 @@ ul {
 .header__contact__phone span {
     direction: ltr;
     white-space: nowrap;
+    font-weight: 700;
 }
 
 
@@ -104,10 +111,12 @@ ul {
     flex-direction: column;
     align-items: center;
     gap: 1.5em;
-    padding-block-start: 0;
+    padding-block-start: 3em;
     padding-block-end: 1em;
     min-height: auto;
     justify-content: center;
+    transform: scale(0.95);
+    transform-origin: top center;
 }
 
 .hero__text {
@@ -184,6 +193,8 @@ ul {
     flex-direction: column;
     align-items: center;
     padding-block: 0;
+    transform: scale(0.95);
+    transform-origin: top center;
 }
 
 .hero__image {
@@ -521,7 +532,9 @@ ul {
 
 .about__mobile__snapshot__points--start {
     width: 75%;
-    padding-block-start: 4em;
+    /* padding-block-start: 4em; */
+    display: flex;
+    flex-direction: column;
 }
 
     .about__mobile__snapshot__points--start ul {
@@ -537,7 +550,9 @@ ul {
 
 .about__mobile__snapshot__points--end {
     width: 75%;
-    padding-block-start: 3.5em;
+    /* padding-block-start: 3.5em; */
+    display: flex;
+    flex-direction: column;
 }
 
     .about__mobile__snapshot__points--end ul {
@@ -645,7 +660,7 @@ ul {
 }
 
 .footer__title {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: bold;
     text-align: center;
 }
@@ -677,8 +692,8 @@ ul {
 
 .footer__contact__btn {
     max-width: fit-content;
-    background-color: #ffffff50;
-    color: var(--main-color);
+    background-color: var(--main-color);
+    color: white;
     border: 2px solid var(--main-color);
     border-radius: 10px;
     font-size: 1.25rem;
@@ -688,8 +703,8 @@ ul {
 }
 
 .footer__contact__btn:hover {
-    background-color: var(--main-color);
-    color: white;
+    background-color: #ffffff50;
+    color: var(--main-color);
 }
 
 .footer__contact__btn:hover .footer__contact__btn__icon {
@@ -722,6 +737,7 @@ ul {
 .footer__contact__phone span {
     direction: ltr;
     white-space: nowrap;
+    font-weight: 700;
 }
 
 .footer__back-to-the-top {
@@ -741,13 +757,24 @@ ul {
 }
 
 .footer__copyrights {
-    display: grid;
-    grid-template-columns: 1fr 56%;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     font-size: 0.9rem;
     border-top: 1px solid #E1ECE9;
     height: 7rem;
     width: 100%;
+    padding: 0 2rem;
+}
+
+.footer__copyrights__logo {
+    height: 3rem;
+    width: auto;
+}
+
+.footer__copyrights__text {
+    flex: 1;
+    text-align: center;
 }
 
 
@@ -908,7 +935,7 @@ ul {
     }
 
     .footer__title {
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
 
     .footer__brands {
@@ -1034,6 +1061,7 @@ ul {
 
     .about__mobile__snapshot {
         flex-direction: initial;
+        align-items: center;
     }
 
     .about__mobile__snapshot__image {
@@ -1043,17 +1071,20 @@ ul {
 
     .about__mobile__snapshot__points--start {
         width: 28rem;
+        position: relative;
+        right: 1.5rem;
     }
 
     .about__mobile__snapshot__points--end {
         position: relative;
-        right: 1.5rem;
+        right: 8.5rem;
         width: 28rem;
     }
 
         .about__mobile__snapshot__points--start .about__mobile__snapshot__point,
         .about__mobile__snapshot__points--end .about__mobile__snapshot__point {
-            margin-bottom: 2em;
+            height: 5rem;
+            margin-bottom: unset;
         }
 
     /* Support */
@@ -1081,7 +1112,7 @@ ul {
 
     /* Footer */
     .footer__title {
-        font-size: 3.5rem;
+        font-size: 2.5rem;
     }
 
     .footer__brands {
